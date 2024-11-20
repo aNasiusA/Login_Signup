@@ -1,5 +1,12 @@
 import express from "express";
-import { getAllUsers, getUserById, createUser } from "./database.js";
+import {
+  getAllUsers,
+  getUserById,
+  getUserByEmail,
+  createUser,
+  hashPassword,
+  verifyPassword,
+} from "./database.js";
 const app = express();
 const PORT = process.env.EXPRESS_PORT || 3000;
 
@@ -18,8 +25,34 @@ app.get("/users/:id", async (req, res) => {
 
 app.post("/register", async (req, res) => {
   const { email, password } = req.body;
-  const createdUser = await createUser(email, password);
+  const hashedPassword = await hashPassword(password);
+  const createdUser = await createUser(email, hashedPassword);
   res.json(createdUser);
+});
+
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "Email and password are required" });
+  }
+
+  const user = await getUserByEmail(email);
+
+  if (!user) {
+    return res.status(401).json({ message: "Invalid email or password" });
+  }
+
+  const isPasswordValid = await verifyPassword(password, user.password);
+
+  if (!isPasswordValid) {
+    return res.status(401).json({ message: "Invalid email or password" });
+  }
+
+  res.json({
+    message: "Login successful",
+    user: { id: user.id, email: user.email },
+  });
 });
 
 app.use((err, req, res, next) => {
