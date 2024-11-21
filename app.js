@@ -1,4 +1,5 @@
 import express from "express";
+import session from "express-session";
 import {
   getAllUsers,
   getUserById,
@@ -6,11 +7,22 @@ import {
   createUser,
   hashPassword,
   verifyPassword,
-} from "./database.js";
+} from "./backend/database.js";
+
 const app = express();
 const PORT = process.env.EXPRESS_PORT || 3000;
 
 app.use(express.json());
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET,
+    saveUninitialized: false,
+    resave: false,
+    cookie: {
+      maxAge: 6000 * 60,
+    },
+  })
+);
 
 app.get("/users", async (req, res) => {
   const users = await getAllUsers();
@@ -48,7 +60,14 @@ app.post("/login", async (req, res) => {
   if (!isPasswordValid) {
     return res.status(401).json({ message: "Invalid email or password" });
   }
+  req.session.visted = true;
+  req.session.user = {
+    id: user.id,
+    email: user.email,
+  };
 
+  console.log(req.session);
+  console.log(req.session.id);
   res.json({
     message: "Login successful",
     user: { id: user.id, email: user.email },

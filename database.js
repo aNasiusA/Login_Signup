@@ -40,7 +40,7 @@ async function createUser(email, password) {
 
 async function hashPassword(plainPassword) {
   const saltRounds = 10;
-  const hashedPassword = await bycrypt.hash(plainPassword, saltRounds);
+  const hashedPassword = await bcrypt.hash(plainPassword, saltRounds);
   return hashedPassword;
 }
 
